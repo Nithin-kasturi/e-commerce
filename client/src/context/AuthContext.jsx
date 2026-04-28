@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { login as loginService, register as registerService } from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -14,6 +14,9 @@ export const AuthProvider = ({ children }) => {
       setUser(data);
       localStorage.setItem('user', JSON.stringify(data));
       return data;
+    } catch (err) {
+      // Re-throw so the calling component (Login page) can catch it and show a toast
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -26,6 +29,9 @@ export const AuthProvider = ({ children }) => {
       setUser(data);
       localStorage.setItem('user', JSON.stringify(data));
       return data;
+    } catch (err) {
+      // Re-throw so Register page can catch and show toast
+      throw err;
     } finally {
       setLoading(false);
     }

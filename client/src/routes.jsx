@@ -13,11 +13,12 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import api from './services/api';
 import ProductCard from './components/ProductCard';
-
+import { useAuth } from './context/AuthContext';
+import MyOrders from './pages/MyOrders';
 const Home = () => {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const { user } = useAuth();
   useEffect(() => {
     api.get('/products?featured=true&limit=4')
       .then(r => setFeatured(r.data.products))
@@ -45,7 +46,11 @@ const Home = () => {
             </p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <Link to="/dashboard" className="btn btn-primary btn-lg">Shop Collection →</Link>
-              <Link to="/register" className="btn btn-outline btn-lg">Create Account</Link>
+                          {!user && (
+              <Link to="/register" className="btn btn-outline btn-lg">
+                Create Account
+              </Link>
+            ) }
             </div>
 
             {/* Stats */}
@@ -69,8 +74,32 @@ const Home = () => {
         }} />
       </section>
 
-      {/* Features */}
-      <section style={{ padding: '80px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--bg-2)' }}>
+      
+
+      {/* Featured Products */}
+      <section style={{ padding: '3rem 0' }}>
+        <div className="container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 48 }}>
+            <div>
+              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)' }}>Featured Products</h2>
+            </div>
+            <Link to="/dashboard" className="btn btn-outline">View All →</Link>
+          </div>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-2)' }}>
+              <div className="spinner" style={{ margin: '0 auto 16px' }} />
+              Loading...
+            </div>
+          ) : (
+            <div className="products-grid">
+              {featured.map(p => <ProductCard key={p._id} product={p} />)}
+            </div>
+          )}
+        </div>
+      </section>
+{/* Features */}
+      <section style={{ padding:'1rem 0rem', marginTop:'4rem', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--bg-2)' }}>
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32 }}>
             {[
@@ -90,33 +119,8 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      {/* Featured Products */}
-      <section style={{ padding: '100px 0' }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 48 }}>
-            <div>
-              <p className="section-label">Hand Picked</p>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)' }}>Featured Products</h2>
-            </div>
-            <Link to="/dashboard" className="btn btn-outline">View All →</Link>
-          </div>
-
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-2)' }}>
-              <div className="spinner" style={{ margin: '0 auto 16px' }} />
-              Loading...
-            </div>
-          ) : (
-            <div className="products-grid">
-              {featured.map(p => <ProductCard key={p._id} product={p} />)}
-            </div>
-          )}
-        </div>
-      </section>
-
       {/* CTA */}
-      <section style={{ padding: '100px 0', background: 'var(--bg-2)', borderTop: '1px solid var(--border)' }}>
+      {!user &&<section style={{ padding: '100px 0', background: 'var(--bg-2)', borderTop: '1px solid var(--border)' }}>
         <div className="container" style={{ textAlign: 'center' }}>
           <p className="section-label" style={{ margin: '0 auto 16px' }}>Join The Community</p>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 52px)', maxWidth: 600, margin: '0 auto 20px', lineHeight: 1.2 }}>
@@ -127,7 +131,7 @@ const Home = () => {
           </p>
           <Link to="/register" className="btn btn-primary btn-lg">Get Started — It's Free</Link>
         </div>
-      </section>
+      </section>}
     </div>
   );
 };
@@ -135,6 +139,7 @@ const Home = () => {
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Home />} />
+    <Route path="/myorders" element={<MyOrders/>}/>
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
     <Route path="/dashboard" element={<Dashboard />} />

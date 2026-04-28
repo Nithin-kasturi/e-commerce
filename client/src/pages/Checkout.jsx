@@ -154,16 +154,16 @@ const Checkout = () => {
                     <p style={{ fontSize: 12, color: 'var(--accent)', marginBottom: 4 }}>🔒 Demo mode — no real charges</p>
                     <div className="form-group">
                       <label className="form-label">Card Number</label>
-                      <input className="form-input" value={cardDetails.number} onChange={e => setCardDetails(c => ({ ...c, number: e.target.value }))} placeholder="4242 4242 4242 4242" />
+                      <input className="form-input" type='number' required value={cardDetails.number} maxLength={12} minLength={12} onChange={e => setCardDetails(c => ({ ...c, number: e.target.value }))} placeholder="4242 4242 4242 4242" />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                       <div className="form-group">
                         <label className="form-label">Expiry</label>
-                        <input className="form-input" value={cardDetails.expiry} onChange={e => setCardDetails(c => ({ ...c, expiry: e.target.value }))} placeholder="MM/YY" />
+                        <input className="form-input" required type='date' maxLength={4} value={cardDetails.expiry} onChange={e => setCardDetails(c => ({ ...c, expiry: e.target.value }))} placeholder="MM/YY" />
                       </div>
                       <div className="form-group">
                         <label className="form-label">CVV</label>
-                        <input className="form-input" value={cardDetails.cvv} onChange={e => setCardDetails(c => ({ ...c, cvv: e.target.value }))} placeholder="123" />
+                        <input className="form-input" required type='number' maxLength={3} value={cardDetails.cvv} onChange={e => setCardDetails(c => ({ ...c, cvv: e.target.value }))} placeholder="123" />
                       </div>
                     </div>
                   </div>

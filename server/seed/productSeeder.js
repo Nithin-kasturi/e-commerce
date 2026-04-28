@@ -115,7 +115,7 @@ const products = [
     price: 59.99,
     category: 'Home & Kitchen',
     brand: 'SereneScents',
-    image: 'https://images.unsplash.com/photo-1602178506542-be8f9e5e8a43?w=400',
+    image: 'https://www.ritualistic.in/cdn/shop/files/DSC04539.jpg?v=1746967576',
     countInStock: 120,
     rating: 4.9,
     numReviews: 78,

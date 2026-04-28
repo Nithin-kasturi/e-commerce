@@ -108,7 +108,7 @@ const Header = () => {
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{user.email}</div>
                   </div>
-                  <DropItem to="/dashboard" label="My Orders" />
+                  <DropItem to="/myorders" label="My Orders" />
                   {user.role === 'admin' && <DropItem to="/dashboard" label="Admin Panel" />}
                   <button onClick={handleLogout} style={{
                     display: 'block', width: '100%', padding: '10px 16px',

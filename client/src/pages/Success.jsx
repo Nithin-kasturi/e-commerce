@@ -91,7 +91,7 @@ const Success = () => {
 
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
           <Link to="/dashboard" className="btn btn-primary btn-lg">Continue Shopping</Link>
-          <Link to="/dashboard" className="btn btn-outline btn-lg">View Orders</Link>
+          <Link to="/myorders" className="btn btn-outline btn-lg">View Orders</Link>
         </div>
       </div>
 

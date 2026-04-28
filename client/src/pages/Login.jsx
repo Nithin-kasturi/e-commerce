@@ -9,17 +9,24 @@ const Login = () => {
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
   const [form, setForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
 
-  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+    if (error) setError(''); // Clear inline error when user starts typing
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       await login(form.email, form.password);
       toast.success('Welcome back!');
       navigate(from, { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Login failed. Please try again.');
+      const message = err?.response?.data?.message || 'Invalid email or password. Please try again.';
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -49,6 +56,21 @@ const Login = () => {
 
         {/* Form card */}
         <div className="card" style={{ padding: 36 }}>
+
+          {/* Inline error banner */}
+          {error && (
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10,
+              background: 'rgba(224,85,85,0.08)',
+              border: '1px solid rgba(224,85,85,0.3)',
+              borderRadius: 6, padding: '12px 14px',
+              marginBottom: 20,
+            }}>
+              <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+              <p style={{ fontSize: 13, color: 'var(--red)', lineHeight: 1.5 }}>{error}</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div className="form-group">
               <label className="form-label">Email Address</label>
@@ -61,6 +83,7 @@ const Login = () => {
                 className="form-input"
                 required
                 autoComplete="email"
+                style={{ borderColor: error ? 'rgba(224,85,85,0.5)' : '' }}
               />
             </div>
 
@@ -78,11 +101,20 @@ const Login = () => {
                 className="form-input"
                 required
                 autoComplete="current-password"
+                style={{ borderColor: error ? 'rgba(224,85,85,0.5)' : '' }}
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ marginTop: 8 }}>
-              {loading ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Signing in...</> : 'Sign In'}
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              disabled={loading}
+              style={{ marginTop: 8 }}
+            >
+              {loading
+                ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Signing in...</>
+                : 'Sign In'
+              }
             </button>
           </form>
 
@@ -90,9 +122,15 @@ const Login = () => {
 
           {/* Demo credentials */}
           <div style={{ background: 'var(--bg-3)', borderRadius: 6, padding: 16, marginBottom: 20, border: '1px solid var(--border)' }}>
-            <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Demo Credentials</p>
-            <p style={{ fontSize: 13, color: 'var(--text-2)' }}>Email: <span style={{ color: 'var(--accent)' }}>demo@luxeshop.com</span></p>
-            <p style={{ fontSize: 13, color: 'var(--text-2)' }}>Password: <span style={{ color: 'var(--accent)' }}>demo123</span></p>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              Demo Credentials
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-2)' }}>
+              Email: <span style={{ color: 'var(--accent)', userSelect: 'all' }}>demo@luxeshop.com</span>
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-2)' }}>
+              Password: <span style={{ color: 'var(--accent)', userSelect: 'all' }}>demo123</span>
+            </p>
           </div>
 
           <p style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 14 }}>

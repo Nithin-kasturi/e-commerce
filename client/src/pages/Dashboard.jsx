@@ -5,7 +5,7 @@ import ProductCard from '../components/ProductCard';
 import SearchBar from '../components/SearchBar';
 
 const Dashboard = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,15 +17,20 @@ const Dashboard = () => {
   const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => { fetchCategories(); }, []);
+
+  // Re-fetch when search / category / sort changes (debounced for search)
   useEffect(() => {
     const timer = setTimeout(() => {
       setPage(1);
-      fetchProducts(1);
+      fetchProducts(1, search, activeCategory, sortBy);
     }, 300);
     return () => clearTimeout(timer);
   }, [search, activeCategory, sortBy]);
 
-  useEffect(() => { fetchProducts(page); }, [page]);
+  // Re-fetch when page changes (but not when other deps change — those reset page to 1 above)
+  useEffect(() => {
+    if (page !== 1) fetchProducts(page, search, activeCategory, sortBy);
+  }, [page]);
 
   const fetchCategories = async () => {
     try {
@@ -34,14 +39,27 @@ const Dashboard = () => {
     } catch {}
   };
 
-  const fetchProducts = async (p = 1) => {
+  // Client-side sort applied after every fetch so all options work regardless of backend support
+  const sortProducts = (list, sort) => {
+    const arr = [...list];
+    switch (sort) {
+      case 'price_asc':  return arr.sort((a, b) => a.price - b.price);
+      case 'price_desc': return arr.sort((a, b) => b.price - a.price);
+      case 'rating':     return arr.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      case 'newest':
+      default:           return arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+  };
+
+  const fetchProducts = async (p = 1, currentSearch = '', currentCategory = '', currentSort = 'newest') => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: p, limit: 12 });
-      if (search) params.append('search', search);
-      if (activeCategory) params.append('category', activeCategory);
+      if (currentSearch) params.append('search', currentSearch);
+      if (currentCategory) params.append('category', currentCategory);
       const res = await api.get(`/products?${params}`);
-      setProducts(res.data.products);
+      const sorted = sortProducts(res.data.products, currentSort);
+      setProducts(sorted);
       setPages(res.data.pages);
       setTotal(res.data.total);
     } catch {} finally { setLoading(false); }
@@ -50,6 +68,13 @@ const Dashboard = () => {
   const handleCategory = (cat) => {
     setActiveCategory(cat);
     setPage(1);
+  };
+
+  const handleSortChange = (e) => {
+    const newSort = e.target.value;
+    setSortBy(newSort);
+    // Also immediately sort the already-loaded products for instant feedback
+    setProducts(prev => sortProducts(prev, newSort));
   };
 
   return (
@@ -61,19 +86,26 @@ const Dashboard = () => {
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
             <h1 style={{ fontSize: 'clamp(32px, 4vw, 48px)', lineHeight: 1.1 }}>
               {activeCategory || 'All Products'}
-              {total > 0 && <span style={{ fontSize: 16, color: 'var(--text-3)', fontFamily: 'DM Sans', fontWeight: 400, marginLeft: 16 }}>{total} items</span>}
+              {total > 0 && (
+                <span style={{ fontSize: 16, color: 'var(--text-3)', fontFamily: 'DM Sans', fontWeight: 400, marginLeft: 16 }}>
+                  {total} items
+                </span>
+              )}
             </h1>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="form-input"
-              style={{ width: 'auto', paddingRight: 40, minWidth: 160 }}
-            >
-              <option value="newest">Newest First</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="rating">Top Rated</option>
-            </select>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={handleSortChange}
+                className="form-input"
+                style={{ width: 'auto', minWidth: 180 }}
+              >
+                <option value="newest">Newest First</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="rating">Top Rated</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -85,7 +117,9 @@ const Dashboard = () => {
             </div>
 
             <div style={{ marginBottom: 28 }}>
-              <h4 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-2)', marginBottom: 14 }}>Category</h4>
+              <h4 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-2)', marginBottom: 14 }}>
+                Category
+              </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <CategoryItem label="All" active={!activeCategory} onClick={() => handleCategory('')} />
                 {categories.map(c => (
@@ -97,6 +131,24 @@ const Dashboard = () => {
 
           {/* Products */}
           <div>
+            {/* Active filter pills */}
+            {(search || activeCategory) && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-3)' }}>Filters:</span>
+                {search && (
+                  <FilterPill label={`"${search}"`} onRemove={() => setSearch('')} />
+                )}
+                {activeCategory && (
+                  <FilterPill label={activeCategory} onRemove={() => handleCategory('')} />
+                )}
+                <button
+                  onClick={() => { setSearch(''); handleCategory(''); }}
+                  style={{ fontSize: 12, color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>
+                  Clear all
+                </button>
+              </div>
+            )}
+
             {loading ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 24 }}>
                 {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
@@ -119,21 +171,32 @@ const Dashboard = () => {
                 {/* Pagination */}
                 {pages > 1 && (
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 48 }}>
+                    <button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      style={{ ...pageBtnStyle, opacity: page === 1 ? 0.3 : 1 }}>
+                      ‹
+                    </button>
                     {[...Array(pages)].map((_, i) => (
                       <button
                         key={i}
                         onClick={() => setPage(i + 1)}
                         style={{
-                          width: 40, height: 40, border: '1px solid',
+                          ...pageBtnStyle,
                           borderColor: page === i + 1 ? 'var(--accent)' : 'var(--border)',
-                          borderRadius: 4,
                           background: page === i + 1 ? 'var(--accent)' : 'transparent',
                           color: page === i + 1 ? '#0a0a0a' : 'var(--text)',
-                          fontSize: 14, fontWeight: page === i + 1 ? 600 : 400,
-                          cursor: 'pointer', transition: 'all 0.2s',
-                        }}
-                      >{i + 1}</button>
+                          fontWeight: page === i + 1 ? 700 : 400,
+                        }}>
+                        {i + 1}
+                      </button>
                     ))}
+                    <button
+                      onClick={() => setPage(p => Math.min(pages, p + 1))}
+                      disabled={page === pages}
+                      style={{ ...pageBtnStyle, opacity: page === pages ? 0.3 : 1 }}>
+                      ›
+                    </button>
                   </div>
                 )}
               </>
@@ -144,6 +207,30 @@ const Dashboard = () => {
     </div>
   );
 };
+
+const pageBtnStyle = {
+  width: 40, height: 40,
+  border: '1px solid var(--border)',
+  borderRadius: 4,
+  background: 'transparent',
+  color: 'var(--text)',
+  fontSize: 14,
+  cursor: 'pointer',
+  transition: 'all 0.2s',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+};
+
+const FilterPill = ({ label, onRemove }) => (
+  <span style={{
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    padding: '4px 10px', borderRadius: 100,
+    background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.25)',
+    color: 'var(--accent)', fontSize: 12, fontWeight: 500,
+  }}>
+    {label}
+    <button onClick={onRemove} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>✕</button>
+  </span>
+);
 
 const CategoryItem = ({ label, active, onClick }) => (
   <button
@@ -175,7 +262,7 @@ const SkeletonCard = () => (
       <div style={{ height: 14, background: 'var(--surface-2)', borderRadius: 4, width: '70%', marginBottom: 14 }} className="skeleton" />
       <div style={{ height: 22, background: 'var(--surface-2)', borderRadius: 4, width: '35%' }} className="skeleton" />
     </div>
-    <style>{`@keyframes shimmer { 0%{opacity:0.5} 50%{opacity:1} 100%{opacity:0.5} } .skeleton{animation:shimmer 1.5s ease infinite;}`}</style>
+    <style>{`@keyframes shimmer{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}.skeleton{animation:shimmer 1.5s ease infinite;}`}</style>
   </div>
 );
 

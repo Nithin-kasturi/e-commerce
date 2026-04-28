@@ -4,12 +4,14 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ScrollToTop from './context/ScrollTop';
 import AppRoutes from './routes';
 import './styles/main.css';
 import './styles/responsive.css';
 
 const App = () => (
   <BrowserRouter>
+    <ScrollToTop />
     <AuthProvider>
       <CartProvider>
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
