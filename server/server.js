@@ -9,10 +9,32 @@ connectDB();
 
 const app = express();
 
+/**
+ * ✅ CORS FIX (handles local + production + preflight)
+ */
+const allowedOrigins = [
+  'http://localhost:5173', // local dev
+  process.env.CLIENT_URL   // deployed frontend
+];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // allow requests with no origin (mobile apps, Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log("❌ Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
+
+// ✅ Explicitly handle preflight (IMPORTANT for POST/PUT)
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -31,6 +53,8 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log("Allowed Origins:", allowedOrigins);
 });
