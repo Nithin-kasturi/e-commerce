@@ -1,0 +1,73 @@
+E-COMMERCE DATABASE SCHEMA DESIGN
+===================================
+
+DATABASE: MongoDB (NoSQL Document Store)
+ORM: Mongoose v8
+
+COLLECTIONS:
+-----------
+
+1. users
+   - _id: ObjectId (auto)
+   - name: String (required)
+   - email: String (unique, required)
+   - password: String (hashed, bcrypt)
+   - role: Enum['user', 'admin']
+   - address: { street, city, state, zip, country }
+   - timestamps: createdAt, updatedAt
+
+2. products
+   - _id: ObjectId (auto)
+   - name: String (required)
+   - description: String (required)
+   - price: Number (required)
+   - category: String (required)
+   - brand: String (required)
+   - image: String (URL)
+   - images: [String] (array of URLs)
+   - countInStock: Number
+   - reviews: [{ user, name, rating, comment, createdAt }]
+   - rating: Number (computed average)
+   - numReviews: Number
+   - featured: Boolean
+   - discount: Number (0-100 percent)
+   - timestamps: createdAt, updatedAt
+
+3. carts
+   - _id: ObjectId (auto)
+   - user: ObjectId (ref: users, unique — one cart per user)
+   - items: [{ product, name, image, price, qty }]
+   - coupon: String
+   - discount: Number
+   - timestamps: createdAt, updatedAt
+
+4. orders
+   - _id: ObjectId (auto)
+   - user: ObjectId (ref: users)
+   - items: [{ product, name, image, price, qty }]
+   - shippingAddress: { fullName, address, city, postalCode, country }
+   - paymentMethod: String
+   - paymentResult: { id, status, update_time, email_address }
+   - itemsPrice: Number
+   - taxPrice: Number
+   - shippingPrice: Number
+   - totalPrice: Number
+   - isPaid: Boolean
+   - paidAt: Date
+   - isDelivered: Boolean
+   - deliveredAt: Date
+   - status: Enum['pending','processing','shipped','delivered','cancelled']
+   - timestamps: createdAt, updatedAt
+
+RELATIONSHIPS:
+- User 1:1 Cart
+- User 1:N Orders
+- Product N:N Orders (via embedded items)
+- User N:M Products (via embedded reviews)
+
+INDEXES:
+- users.email (unique)
+- products.category
+- products.featured
+- orders.user
+- carts.user (unique)

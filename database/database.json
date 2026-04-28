@@ -1,0 +1,40 @@
+{
+  "description": "Sample data snapshot for development and testing",
+  "users": [
+    {
+      "_id": "demo_user_001",
+      "name": "Demo User",
+      "email": "demo@luxeshop.com",
+      "password": "demo123",
+      "role": "user"
+    },
+    {
+      "_id": "admin_user_001",
+      "name": "Admin User",
+      "email": "admin@luxeshop.com",
+      "password": "admin123",
+      "role": "admin"
+    }
+  ],
+  "products": [
+    {
+      "name": "Premium Wireless Headphones",
+      "price": 299.99,
+      "category": "Electronics",
+      "brand": "SoundWave",
+      "countInStock": 50,
+      "rating": 4.5,
+      "featured": true,
+      "discount": 10
+    },
+    {
+      "name": "Smart Watch Pro",
+      "price": 399.99,
+      "category": "Electronics",
+      "brand": "TechGear",
+      "countInStock": 35,
+      "rating": 4.7,
+      "featured": true
+    }
+  ]
+}
